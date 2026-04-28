@@ -418,17 +418,29 @@ export const asyncRouterMap = [
         path: 'fastclassify',
         name: 'fastclassify',
         component: () => import('@/views/classify/fastclassify/index'),
-        // 只是备注
         meta: {title: '快速分类', icon: 'eye'}
       },
       {
         path: 'wristband',
         name: 'wristband',
         component: () => import('@/views/classify/wristband/index'),
-        // 只是备注
         meta: {title: '标识管理', icon: 'eye'}
       },
     ]
+  },
+
+  {
+    path: '/medicine',
+    component: Layout,
+    redirect: '/medicine/drug',
+    name: 'medicine',
+    meta: {title: '药材保障', icon: 'product'},
+    children: [{
+      path: 'drug',
+      name: 'medicineDrug',
+      component: () => import('@/views/medicine/drug/index'),
+      meta: {title: '药材字典', icon: 'product-list'}
+    }]
   },
 
   {path: '*', redirect: '/404', hidden: true}
