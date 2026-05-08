@@ -440,6 +440,12 @@ export const asyncRouterMap = [
       name: 'medicineDrug',
       component: () => import('@/views/medicine/drug/index'),
       meta: {title: '药材字典', icon: 'product-list'}
+    },
+    {
+      path: 'drugWarning',
+      name: 'drugWarning',
+      component: () => import('@/views/medicine/drugWarning/index'),
+      meta: {title: '库存预警', icon: 'product-list'}
     }]
   },
 
