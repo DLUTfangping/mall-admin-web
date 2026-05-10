@@ -446,6 +446,24 @@ export const asyncRouterMap = [
       name: 'drugWarning',
       component: () => import('@/views/medicine/drugWarning/index'),
       meta: {title: '库存预警', icon: 'product-list'}
+    },
+    {
+      path: 'pharmacy',
+      name: 'pharmacy',
+      component: () => import('@/views/medicine/pharmacy/index'),
+      meta: {title: '药房管理', icon: 'product-list'}
+    },
+    {
+      path: 'stockIn',
+      name: 'stockIn',
+      component: () => import('@/views/medicine/stockIn/index'),
+      meta: {title: '药材入库', icon: 'product-list'}
+    },
+    {
+      path: 'stock',
+      name: 'stock',
+      component: () => import('@/views/medicine/stock/index'),
+      meta: {title: '药材库存', icon: 'product-list'}
     }]
   },
 
