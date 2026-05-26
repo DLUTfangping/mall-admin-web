@@ -1,8 +1,5 @@
 <template>
   <div class="medicine-pharmacy">
-    <div class="content-header">
-      <h3 class="content-title">药房管理</h3>
-    </div>
     <div class="filter-container">
       <el-select v-model="listQuery.status" placeholder="状态" clearable style="width: 120px">
         <el-option label="禁用" :value="0" />

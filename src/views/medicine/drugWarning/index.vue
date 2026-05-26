@@ -1,8 +1,5 @@
 <template>
   <div class="drug-warning">
-    <div class="content-header">
-      <h3 class="content-title">库存预警</h3>
-    </div>
     <div class="filter-container">
       <el-select v-model="listQuery.drugType" placeholder="药材类型" clearable style="width: 150px">
         <el-option label="西药" value="WESTERN" />
@@ -29,7 +26,12 @@
       </el-table-column>
       <el-table-column label="最低预警库存" prop="minWarningStock" width="120" align="center"/>
       <el-table-column label="最高预警库存" prop="maxWarningStock" width="120" align="center"/>
-      <el-table-column label="有效期预警天数" prop="validityWarningDays" width="120" align="center"/>
+      <el-table-column label="有效期预警" width="120" align="center">
+        <template slot-scope="scope">
+          <span v-if="scope.row.validityWarningEnabled === 1">{{ scope.row.validityWarningDays || 0 }}天</span>
+          <el-tag v-else type="info">未启用</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="批号预警" width="100" align="center">
         <template slot-scope="scope">
           <el-tag :type="scope.row.batchWarningEnabled === 1 ? 'danger' : 'info'">
@@ -39,7 +41,7 @@
       </el-table-column>
       <el-table-column label="再订货点" prop="reorderPoint" width="100" align="center"/>
       <el-table-column label="盘点周期(天)" prop="inspectionCycle" width="110" align="center"/>
-      <el-table-column label="操作" width="120" align="center">
+      <el-table-column label="操作" width="120" fixed="right" align="center">
         <template slot-scope="scope">
           <el-button size="mini" @click="handleEdit(scope.row)">配置</el-button>
         </template>
@@ -89,18 +91,25 @@
         <el-divider></el-divider>
         <el-row :gutter="30">
           <el-col :span="8">
-            <el-form-item label="有效期预警天数">
-              <el-input-number v-model="warningForm.validityWarningDays" :min="0" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
             <el-form-item label="批号预警">
               <el-switch v-model="warningForm.batchWarningEnabled" :active-value="1" :inactive-value="0" />
             </el-form-item>
           </el-col>
+          <el-col :span="8" v-if="warningForm.batchWarningEnabled === 1">
+            <el-form-item label="批号预警阈值">
+              <el-input-number v-model="warningForm.batchWarningThreshold" :precision="2" :min="0" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="30">
           <el-col :span="8">
-            <el-form-item label="盘点周期(天)">
-              <el-input-number v-model="warningForm.inspectionCycle" :min="0" style="width: 100%" />
+            <el-form-item label="有效期预警">
+              <el-switch v-model="warningForm.validityWarningEnabled" :active-value="1" :inactive-value="0" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8" v-if="warningForm.validityWarningEnabled === 1">
+            <el-form-item label="有效期预警天数">
+              <el-input-number v-model="warningForm.validityWarningDays" :min="0" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -145,8 +154,10 @@ export default {
         drugName: '',
         minWarningStock: null,
         maxWarningStock: null,
+        validityWarningEnabled: 0,
         validityWarningDays: null,
         batchWarningEnabled: 0,
+        batchWarningThreshold: null,
         reorderPoint: null,
         inspectionCycle: null,
         remark: ''
@@ -179,11 +190,37 @@ export default {
       if (this.listQuery.drugType) params.drugType = this.listQuery.drugType
       if (this.listQuery.keyword && this.listQuery.keyword.trim()) params.keyword = this.listQuery.keyword.trim()
 
-      fetchList(params).then(response => {
+      fetchList(params).then(async response => {
         this.list = response.data.list
         this.total = response.data.total
         this.listLoading = false
-        this.loadWarningData()
+
+        // 串行加载预警数据
+        const newList = []
+        for (let i = 0; i < this.list.length; i++) {
+          const drug = this.list[i]
+          try {
+            const res = await getDrugWarning(drug.drugCode)
+            if (res.data) {
+              newList.push({
+                ...drug,
+                minWarningStock: res.data.minWarningStock,
+                maxWarningStock: res.data.maxWarningStock,
+                validityWarningEnabled: res.data.validityWarningEnabled,
+                validityWarningDays: res.data.validityWarningDays,
+                batchWarningEnabled: res.data.batchWarningEnabled,
+                reorderPoint: res.data.reorderPoint,
+                inspectionCycle: res.data.inspectionCycle
+              })
+            } else {
+              newList.push(drug)
+            }
+          } catch (e) {
+            newList.push(drug)
+          }
+        }
+        this.list = newList
+        this.$forceUpdate()
       }).catch(() => {
         this.listLoading = false
       })
@@ -221,8 +258,10 @@ export default {
             drugName: row.drugName,
             minWarningStock: null,
             maxWarningStock: null,
+            validityWarningEnabled: 0,
             validityWarningDays: null,
             batchWarningEnabled: 0,
+            batchWarningThreshold: null,
             reorderPoint: null,
             inspectionCycle: null,
             remark: ''

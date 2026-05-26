@@ -1,8 +1,5 @@
 <template>
   <div class="medicine-drug">
-    <div class="content-header">
-      <h3 class="content-title">药材字典</h3>
-    </div>
     <div class="filter-container">
       <el-select v-model="listQuery.drugType" placeholder="药材类型" clearable style="width: 150px">
         <el-option label="西药" value="WESTERN" />
@@ -48,7 +45,7 @@
           <span v-else-if="scope.row.drugCategory === 'ANESTHETIC'">麻醉药品</span>
           <span v-else-if="scope.row.drugCategory === 'PSYCHOTROPIC_I'">精神类I类</span>
           <span v-else-if="scope.row.drugCategory === 'PSYCHOTROPIC_II'">精神类II类</span>
-          <span v-else>-</span>
+          <span v-else>{{ scope.row.drugCategory || '-' }}</span>
         </template>
       </el-table-column>
       <el-table-column label="生产厂家" prop="manufacturer" min-width="150" align="center" show-overflow-tooltip/>

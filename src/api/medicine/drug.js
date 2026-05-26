@@ -45,3 +45,11 @@ export function updateDrugStatus(id, status) {
     params: { status: status }
   })
 }
+
+export function searchDrugs(keyword) {
+  return request({
+    url: '/drug/searchDrugs',
+    method: 'get',
+    params: keyword ? { keyword } : {}
+  })
+}

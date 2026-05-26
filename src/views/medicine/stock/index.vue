@@ -1,14 +1,15 @@
 <template>
-  <div class="medicine-stock">
-    <div class="content-header">
-      <h3 class="content-title">药材库存</h3>
-    </div>
+  <div class="medicine-stock" :key="viewMode">
     <div class="filter-container">
+      <el-radio-group v-model="viewMode" size="small" style="margin-right: 15px;">
+        <el-radio-button label="batch">批次视图</el-radio-button>
+        <el-radio-button label="summary">药品总库存</el-radio-button>
+      </el-radio-group>
       <el-select v-model="listQuery.pharmacyId" placeholder="药房" clearable style="width: 150px">
         <el-option v-for="p in pharmacyList" :key="p.id" :label="p.pharmacyName" :value="p.id" />
       </el-select>
       <el-input v-model="listQuery.drugName" placeholder="药品名称" style="width: 150px;" clearable />
-      <el-input v-model="listQuery.batchNo" placeholder="批号" style="width: 120px;" clearable />
+      <el-input v-model="listQuery.batchNo" placeholder="批号" style="width: 120px;" clearable v-if="viewMode === 'batch'" />
       <el-select v-model="listQuery.drugCategory" placeholder="药品分类" clearable style="width: 130px">
         <el-option label="普通药品" value="NORMAL" />
         <el-option label="麻醉药品" value="ANESTHETIC" />
@@ -24,7 +25,8 @@
       <el-button icon="el-icon-refresh" @click="handleReset">重置</el-button>
     </div>
 
-    <el-table v-loading="listLoading" :data="list" border stripe style="width: 100%">
+    <!-- 批次视图 -->
+    <el-table v-loading="listLoading" :data="list" border stripe style="width: 100%" v-if="viewMode === 'batch'" key="batch-table">
       <el-table-column label="药房" prop="pharmacyName" width="100" align="center" />
       <el-table-column label="药材编码" prop="drugCode" width="100" align="center" />
       <el-table-column label="药材名称" prop="drugName" width="120" align="center" />
@@ -50,15 +52,19 @@
       </el-table-column>
       <el-table-column label="生产厂家" prop="manufacturer" min-width="150" align="center" show-overflow-tooltip />
       <el-table-column label="批号" prop="batchNo" width="100" align="center" />
-      <el-table-column label="当前库存" prop="quantity" width="80" align="center">
+      <el-table-column label="当前库存" width="100" align="center">
         <template slot-scope="scope">
           <span v-if="isLowStock(scope.row)" style="color: #F56C6C; font-weight: bold">
-            {{ scope.row.quantity }} ⚠
+            {{ scope.row.quantity }} {{ scope.row.baseUnit || '' }} ⚠
           </span>
-          <span v-else>{{ scope.row.quantity }}</span>
+          <span v-else>{{ scope.row.quantity }} {{ scope.row.baseUnit || '' }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="单价" prop="unitPrice" width="80" align="center" />
+      <el-table-column label="单价" width="100" align="center">
+        <template slot-scope="scope">
+          {{ scope.row.unitPrice ? scope.row.unitPrice + '元/' + (scope.row.unit || '') : '-' }}
+        </template>
+      </el-table-column>
       <el-table-column label="生产日期" width="100" align="center">
         <template slot-scope="scope">{{ formatDate(scope.row.productionDate) }}</template>
       </el-table-column>
@@ -70,7 +76,35 @@
       </el-table-column>
     </el-table>
 
+    <!-- 药品总库存视图 -->
+    <el-table v-loading="listLoading" :data="summaryList" border stripe style="width: 100%" v-if="viewMode === 'summary'" key="summary-table">
+      <el-table-column label="药房" prop="pharmacyName" width="100" align="center" />
+      <el-table-column label="药材编码" prop="drugCode" width="100" align="center" />
+      <el-table-column label="药材名称" prop="drugName" width="120" align="center" />
+      <el-table-column label="药材类型" width="80" align="center">
+        <template slot-scope="scope">{{ getDrugTypeLabel(scope.row.drugType) }}</template>
+      </el-table-column>
+      <el-table-column label="剂型" width="80" align="center">
+        <template slot-scope="scope">{{ getDosageFormLabel(scope.row.dosageForm) }}</template>
+      </el-table-column>
+      <el-table-column label="包装规格" prop="spec" width="120" align="center" />
+      <el-table-column label="生产厂家" prop="manufacturer" min-width="150" align="center" show-overflow-tooltip />
+      <el-table-column label="总库存" width="100" align="center">
+        <template slot-scope="scope">
+          <span v-if="isTotalLowStock(scope.row)" style="color: #F56C6C; font-weight: bold">
+            {{ scope.row.totalQuantity }} {{ scope.row.baseUnit || '' }} ⚠
+          </span>
+          <span v-else-if="isTotalHighStock(scope.row)" style="color: #E6A23C; font-weight: bold">
+            {{ scope.row.totalQuantity }} {{ scope.row.baseUnit || '' }} ▲
+          </span>
+          <span v-else>{{ scope.row.totalQuantity }} {{ scope.row.baseUnit || '' }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="批次数" prop="batchCount" width="70" align="center" />
+    </el-table>
+
     <el-pagination
+      v-if="viewMode === 'batch'"
       :current-page="listQuery.pageNum"
       :page-size="listQuery.pageSize"
       :total="total"
@@ -91,7 +125,9 @@ export default {
       list: [],
       listLoading: false,
       total: 0,
+      summaryList: [],
       pharmacyList: [],
+      viewMode: 'batch',
       listQuery: {
         pageNum: 1,
         pageSize: 10,
@@ -125,11 +161,11 @@ export default {
     },
     handleSearch() {
       this.listQuery.pageNum = 1
-      this.getList()
+      this.switchView()
     },
     handleReset() {
       this.listQuery = { pageNum: 1, pageSize: 10, pharmacyId: null, drugName: '', batchNo: '', drugCategory: '', drugType: '' }
-      this.getList()
+      this.switchView()
     },
     handlePageChange(page) {
       this.listQuery.pageNum = page
@@ -157,10 +193,81 @@ export default {
       return map[value] || value || '-'
     },
     isLowStock(row) {
-      if (row.minWarningStock != null && row.quantity != null) {
-        return Number(row.quantity) < Number(row.minWarningStock)
+      // 批号预警：启用且库存低于阈值时标红
+      if (row.batchWarningEnabled === 1 && row.batchWarningThreshold != null && row.quantity != null) {
+        return Number(row.quantity) < Number(row.batchWarningThreshold)
       }
       return false
+    },
+    isTotalLowStock(row) {
+      // 总库存预警：启用且总库存低于最低预警库存时标红
+      if (row.minWarningStock != null && row.totalQuantity != null) {
+        return Number(row.totalQuantity) < Number(row.minWarningStock)
+      }
+      return false
+    },
+    isTotalHighStock(row) {
+      // 总库存预警：启用且总库存高于最高预警库存时标橙
+      if (row.maxWarningStock != null && row.totalQuantity != null) {
+        return Number(row.totalQuantity) > Number(row.maxWarningStock)
+      }
+      return false
+    },
+    switchView() {
+      if (this.viewMode === 'summary') {
+        this.getSummaryList()
+      } else {
+        this.summaryList = []
+        this.list = []
+        this.getList()
+      }
+    },
+    getSummaryList() {
+      this.listLoading = true
+      const query = { pageSize: 1000, pageNum: 1 }
+      if (this.listQuery.pharmacyId) query.pharmacyId = this.listQuery.pharmacyId
+      if (this.listQuery.drugName) query.drugName = this.listQuery.drugName
+      if (this.listQuery.drugCategory) query.drugCategory = this.listQuery.drugCategory
+      if (this.listQuery.drugType) query.drugType = this.listQuery.drugType
+      fetchStockList(query).then(response => {
+        const list = (response.data && response.data.list) || []
+        console.log('getSummaryList list:', list.length)
+        const map = {}
+        for (const item of list) {
+          const key = item.pharmacyId + '_' + item.drugId
+          if (!map[key]) {
+            map[key] = {
+              pharmacyId: item.pharmacyId,
+              pharmacyName: item.pharmacyName,
+              drugId: item.drugId,
+              drugCode: item.drugCode,
+              drugName: item.drugName,
+              drugType: item.drugType,
+              dosageForm: item.dosageForm,
+              spec: item.spec,
+              manufacturer: item.manufacturer,
+              minWarningStock: item.minWarningStock,
+              maxWarningStock: item.maxWarningStock,
+              totalQuantity: 0,
+              batchCount: 0
+            }
+          }
+          map[key].totalQuantity += Number(item.quantity || 0)
+          map[key].batchCount++
+        }
+        const newList = Object.values(map)
+        console.log('getSummaryList newList:', newList.length)
+        this.summaryList = [...newList]
+        this.listLoading = false
+      }).catch((err) => {
+        console.error('getSummaryList error:', err)
+        this.listLoading = false
+      })
+    }
+  },
+  watch: {
+    viewMode() {
+      this.switchView()
     }
   }
 }
