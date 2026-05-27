@@ -394,16 +394,27 @@ export const asyncRouterMap = [
     component: Layout,
     redirect: '/mgs/inital',
     name: 'mgs',
-    meta: {title: '系统管理工作站', icon: 'marker'},
+    meta: {title: '系统管理', icon: 'marker'},
     children: [
       {
         path: 'inital',
         name: 'inital',
         component: () => import('@/views/mgs/inital/index'),
-        // 只是备注
         meta: {title: '初始化配置', icon: 'eye'}
       },
-      
+      {
+        path: 'dictType',
+        name: 'DictTypeList',
+        component: () => import('@/views/sys/dict/typeList'),
+        meta: {title: '字典类型', icon: 'dict'}
+      },
+      {
+        path: 'dictItem',
+        name: 'DictItemList',
+        component: () => import('@/views/sys/dict/itemList'),
+        meta: {title: '字典明细'},
+        hidden: true
+      }
     ]
   },
 
@@ -464,6 +475,26 @@ export const asyncRouterMap = [
       name: 'stock',
       component: () => import('@/views/medicine/stock/index'),
       meta: {title: '药材库存', icon: 'product-list'}
+    },
+    {
+      path: 'stockOut',
+      name: 'stockOut',
+      component: () => import('@/views/medicine/stockOut/index'),
+      meta: {title: '药材出库', icon: 'product-list'}
+    }]
+  },
+
+  {
+    path: '/blood',
+    component: Layout,
+    redirect: '/blood/bloodIn',
+    name: 'blood',
+    meta: {title: '血液保障', icon: 'product'},
+    children: [{
+      path: 'bloodIn',
+      name: 'bloodIn',
+      component: () => import('@/views/blood/bloodIn/index'),
+      meta: {title: '血液入库', icon: 'product-list'}
     }]
   },
 
