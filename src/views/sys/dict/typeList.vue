@@ -87,7 +87,7 @@
 
 <script>
 import { fetchTypeList, createType, updateType, deleteType, fetchCategories } from '@/api/sys/dictType'
-import { formatDate } from '@/utils'
+import { formatDate } from '@/utils/date'
 
 export default {
   name: 'DictTypeList',

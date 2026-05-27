@@ -85,7 +85,7 @@
 
 <script>
 import { fetchItemList, createItem, updateItem, deleteItem } from '@/api/sys/dictItem'
-import { formatDate } from '@/utils'
+import { formatDate } from '@/utils/date'
 
 export default {
   name: 'DictItemList',
