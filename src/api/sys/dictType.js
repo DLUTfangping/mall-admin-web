@@ -31,6 +31,14 @@ export function updateType(id, data) {
   })
 }
 
+export function updateTypeStatus(id, status) {
+  return request({
+    url: `/dict/type/updateStatus/${id}`,
+    method: 'post',
+    params: { status }
+  })
+}
+
 export function deleteType(id) {
   return request({
     url: `/dict/type/delete/${id}`,

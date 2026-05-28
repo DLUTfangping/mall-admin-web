@@ -31,6 +31,14 @@ export function updateItem(id, data) {
   })
 }
 
+export function updateItemStatus(id, status) {
+  return request({
+    url: `/dict/item/updateStatus/${id}`,
+    method: 'post',
+    params: { status }
+  })
+}
+
 export function deleteItem(id) {
   return request({
     url: `/dict/item/delete/${id}`,

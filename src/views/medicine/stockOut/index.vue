@@ -168,8 +168,8 @@
             <div class="input-group">
               <label class="input-label">出库单位</label>
               <el-select v-model="addDrugForm.unitType" placeholder="单位" style="width: 100px;">
-                <el-option label="包装单位" value="PACK" />
-                <el-option label="基本单位" value="BASE" />
+                <el-option :label="addDrugForm.unit || '包装'" value="PACK" />
+                <el-option :label="addDrugForm.baseUnit || '基本'" value="BASE" />
               </el-select>
             </div>
             <div class="input-group">
@@ -227,10 +227,9 @@
           <el-table-column label="批号" prop="batchNo" width="100" align="center" />
           <el-table-column label="包装规格" prop="spec" width="100" align="center" />
           <el-table-column label="生产厂家" prop="manufacturer" min-width="120" align="center" show-overflow-tooltip />
-          <el-table-column label="库存数量" prop="stockQuantity" width="70" align="center" />
-          <el-table-column label="出库单位" width="80" align="center">
+          <el-table-column label="出库单位" width="100" align="center">
             <template slot-scope="scope">
-              <span>{{ scope.row.unitType === 'PACK' ? '包装' : '基本' }}</span>
+              <span>{{ scope.row.unitType === 'PACK' ? scope.row.unit : scope.row.baseUnit }}</span>
             </template>
           </el-table-column>
           <el-table-column label="出库数量" prop="quantity" width="80" align="center" />
@@ -307,10 +306,9 @@
         <el-table-column label="批号" prop="batchNo" width="100" align="center" />
         <el-table-column label="包装规格" prop="spec" width="90" align="center" />
         <el-table-column label="生产厂家" prop="manufacturer" min-width="120" align="center" show-overflow-tooltip />
-        <el-table-column label="库存数量" prop="stockQuantity" width="80" align="center" />
-        <el-table-column label="出库单位" width="80" align="center">
+        <el-table-column label="出库单位" width="100" align="center">
           <template slot-scope="scope">
-            <span>{{ scope.row.unitType === 'PACK' ? '包装' : '基本' }}</span>
+            <span>{{ scope.row.unitType === 'PACK' ? scope.row.unit : scope.row.baseUnit }}</span>
           </template>
         </el-table-column>
         <el-table-column label="出库数量" prop="quantity" width="80" align="center" />
@@ -368,6 +366,8 @@ export default {
         isEssential: 0,
         skinTestRequired: 0,
         manufacturer: '',
+        unit: '',
+        baseUnit: '',
         unitType: 'PACK',
         batchNo: '',
         batchInfo: null,
@@ -437,6 +437,8 @@ export default {
         this.addDrugForm.isEssential = drug.isEssential
         this.addDrugForm.skinTestRequired = drug.skinTestRequired
         this.addDrugForm.manufacturer = drug.manufacturer
+        this.addDrugForm.unit = drug.unit
+        this.addDrugForm.baseUnit = drug.baseUnit
         this.addDrugForm.unitType = 'PACK'
         this.addDrugForm.batchNo = ''
         this.addDrugForm.batchInfo = null
@@ -559,6 +561,8 @@ export default {
           dosageForm: this.addDrugForm.dosageForm,
           spec: this.addDrugForm.spec,
           manufacturer: this.addDrugForm.manufacturer,
+          unit: this.addDrugForm.unit,
+          baseUnit: this.addDrugForm.baseUnit,
           unitType: this.addDrugForm.unitType,
           batchNo: this.addDrugForm.batchNo,
           stockQuantity: stockQuantity,
@@ -573,7 +577,7 @@ export default {
       this.addDrugForm = {
         drugId: null, drugCode: '', drugName: '', commonName: '', drugType: '', prescriptionType: '',
         drugCategory: '', dosageForm: '', spec: '', isEssential: 0, skinTestRequired: 0,
-        manufacturer: '', unitType: 'PACK', batchNo: '', batchInfo: null, quantity: null, expiryDate: '', stockQuantity: null
+        manufacturer: '', unit: '', baseUnit: '', unitType: 'PACK', batchNo: '', batchInfo: null, quantity: null, expiryDate: '', stockQuantity: null
       }
     },
     handleRemoveDrug(index) {
@@ -684,7 +688,7 @@ export default {
       this.addDrugForm = {
         drugId: null, drugCode: '', drugName: '', commonName: '', drugType: '', prescriptionType: '',
         drugCategory: '', dosageForm: '', spec: '', isEssential: 0, skinTestRequired: 0,
-        manufacturer: '', unitType: 'PACK', batchNo: '', batchInfo: null, quantity: null, expiryDate: '', stockQuantity: null
+        manufacturer: '', unit: '', baseUnit: '', unitType: 'PACK', batchNo: '', batchInfo: null, quantity: null, expiryDate: '', stockQuantity: null
       }
       this.batchList = []
     },
