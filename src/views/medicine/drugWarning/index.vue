@@ -8,6 +8,7 @@
       </el-select>
       <el-input v-model="listQuery.keyword" placeholder="药材名称/编码" style="width: 200px;" clearable/>
       <el-button type="primary" icon="el-icon-search" @click="handleSearch">搜索</el-button>
+      <el-button type="primary" @click="openColorConfig">颜色配置</el-button>
     </div>
     <el-table v-loading="listLoading" :data="list" border stripe style="width: 100%">
       <el-table-column label="药材编码" prop="drugCode" width="120" align="center"/>
@@ -28,8 +29,9 @@
       <el-table-column label="最高预警库存" prop="maxWarningStock" width="120" align="center"/>
       <el-table-column label="有效期预警" width="120" align="center">
         <template slot-scope="scope">
-          <span v-if="scope.row.validityWarningEnabled === 1">{{ scope.row.validityWarningDays || 0 }}天</span>
-          <el-tag v-else type="info">未启用</el-tag>
+          <el-switch :value="scope.row.validityWarningEnabled === 1"
+                    @change="handleValidityWarningChange(scope.row, $event)"
+                    active-color="#13ce66" inactive-color="#dcdfe6"/>
         </template>
       </el-table-column>
       <el-table-column label="批号预警" width="100" align="center">
@@ -41,7 +43,7 @@
       </el-table-column>
       <el-table-column label="再订货点" prop="reorderPoint" width="100" align="center"/>
       <el-table-column label="盘点周期(天)" prop="inspectionCycle" width="110" align="center"/>
-      <el-table-column label="操作" width="120" fixed="right" align="center">
+      <el-table-column label="操作" width="100" fixed="right" align="center">
         <template slot-scope="scope">
           <el-button size="mini" @click="handleEdit(scope.row)">配置</el-button>
         </template>
@@ -101,18 +103,6 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row :gutter="30">
-          <el-col :span="8">
-            <el-form-item label="有效期预警">
-              <el-switch v-model="warningForm.validityWarningEnabled" :active-value="1" :inactive-value="0" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8" v-if="warningForm.validityWarningEnabled === 1">
-            <el-form-item label="有效期预警天数">
-              <el-input-number v-model="warningForm.validityWarningDays" :min="0" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-        </el-row>
         <el-divider></el-divider>
         <el-row>
           <el-col :span="24">
@@ -127,12 +117,49 @@
         <el-button type="primary" @click="submitForm">保存</el-button>
       </div>
     </el-dialog>
+
+    <!-- 有效期预警颜色配置对话框 -->
+    <el-dialog title="有效期预警颜色配置" :visible.sync="colorConfigVisible" width="661px">
+      <el-table :data="colorConfigList" border size="small" style="width: 100%; table-layout: fixed;">
+        <el-table-column label="级别名称" prop="levelName" width="100" align="center"/>
+        <el-table-column label="最小天数" width="110" align="center">
+          <template slot-scope="scope">
+            <el-input v-model="scope.row.minDays" size="small" style="width: 100%" @input="scope.row.minDays = $event.replace(/\D/g, '')" />
+          </template>
+        </el-table-column>
+        <el-table-column label="最大天数" width="110" align="center">
+          <template slot-scope="scope">
+            <el-input v-model="scope.row.maxDays" size="small" style="width: 100%" placeholder="-1表示无上限" @input="scope.row.maxDays = $event.replace(/\D/g, '')" />
+          </template>
+        </el-table-column>
+        <el-table-column label="颜色" width="120" align="center">
+          <template slot-scope="scope">
+            <el-color-picker v-model="scope.row.color" size="small"/>
+          </template>
+        </el-table-column>
+        <el-table-column label="启用" width="80" align="center">
+          <template slot-scope="scope">
+            <el-switch v-model="scope.row.enabled" :active-value="1" :inactive-value="0"/>
+          </template>
+        </el-table-column>
+        <el-table-column label="排序" width="100" align="center">
+          <template slot-scope="scope">
+            <el-input v-model="scope.row.sort" size="small" style="width: 100%" @input="scope.row.sort = $event.replace(/\D/g, '')" />
+          </template>
+        </el-table-column>
+      </el-table>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="colorConfigVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveColorConfig">保存配置</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { fetchList } from '@/api/medicine/drug'
 import { getDrugWarning, saveDrugWarning } from '@/api/medicine/drugWarning'
+import { getValidityWarningConfigList, saveValidityWarningConfig } from '@/api/medicine/validityWarningConfig'
 
 export default {
   name: 'DrugWarning',
@@ -148,6 +175,8 @@ export default {
         keyword: ''
       },
       dialogFormVisible: false,
+      colorConfigVisible: false,
+      colorConfigList: [],
       warningForm: {
         id: null,
         drugCode: '',
@@ -155,7 +184,6 @@ export default {
         minWarningStock: null,
         maxWarningStock: null,
         validityWarningEnabled: 0,
-        validityWarningDays: null,
         batchWarningEnabled: 0,
         batchWarningThreshold: null,
         reorderPoint: null,
@@ -166,8 +194,14 @@ export default {
   },
   created() {
     this.fetchData()
+    this.loadColorConfig()
   },
   methods: {
+    loadColorConfig() {
+      getValidityWarningConfigList().then(response => {
+        this.colorConfigList = response.data
+      })
+    },
     getDosageFormLabel(value) {
       const map = {
         'TABLET': '片剂',
@@ -207,7 +241,6 @@ export default {
                 minWarningStock: res.data.minWarningStock,
                 maxWarningStock: res.data.maxWarningStock,
                 validityWarningEnabled: res.data.validityWarningEnabled,
-                validityWarningDays: res.data.validityWarningDays,
                 batchWarningEnabled: res.data.batchWarningEnabled,
                 reorderPoint: res.data.reorderPoint,
                 inspectionCycle: res.data.inspectionCycle
@@ -231,7 +264,7 @@ export default {
           if (response.data) {
             drug.minWarningStock = response.data.minWarningStock
             drug.maxWarningStock = response.data.maxWarningStock
-            drug.validityWarningDays = response.data.validityWarningDays
+            drug.validityWarningEnabled = response.data.validityWarningEnabled
             drug.batchWarningEnabled = response.data.batchWarningEnabled
             drug.reorderPoint = response.data.reorderPoint
             drug.inspectionCycle = response.data.inspectionCycle
@@ -274,6 +307,36 @@ export default {
       saveDrugWarning(this.warningForm).then(() => {
         this.$message.success('保存成功')
         this.dialogFormVisible = false
+        this.fetchData()
+      })
+    },
+    handleValidityWarningChange(row, newValue) {
+      const enabled = newValue ? 1 : 0
+      saveDrugWarning({
+        drugCode: row.drugCode,
+        validityWarningEnabled: enabled,
+        minWarningStock: row.minWarningStock,
+        maxWarningStock: row.maxWarningStock,
+        batchWarningEnabled: row.batchWarningEnabled,
+        batchWarningThreshold: row.batchWarningThreshold,
+        reorderPoint: row.reorderPoint,
+        inspectionCycle: row.inspectionCycle,
+        remark: row.remark
+      }).then(() => {
+        this.$message.success('保存成功')
+        this.fetchData()
+      })
+    },
+    openColorConfig() {
+      getValidityWarningConfigList().then(response => {
+        this.colorConfigList = response.data
+        this.colorConfigVisible = true
+      })
+    },
+    saveColorConfig() {
+      saveValidityWarningConfig(this.colorConfigList).then(() => {
+        this.$message.success('保存成功')
+        this.colorConfigVisible = false
         this.fetchData()
       })
     }

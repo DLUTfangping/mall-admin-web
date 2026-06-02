@@ -407,13 +407,6 @@ export const asyncRouterMap = [
         name: 'sysDictType',
         component: () => import('@/views/sys/dict/typeList'),
         meta: {title: '字典类型', icon: 'dict'}
-      },
-      {
-        path: 'dictItem',
-        name: 'sysDictItem',
-        component: () => import('@/views/sys/dict/itemList'),
-        meta: {title: '字典明细'},
-        hidden: true
       }
     ]
   },

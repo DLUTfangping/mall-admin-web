@@ -69,7 +69,11 @@
         <template slot-scope="scope">{{ formatDate(scope.row.productionDate) }}</template>
       </el-table-column>
       <el-table-column label="有效期" width="100" align="center">
-        <template slot-scope="scope">{{ formatDate(scope.row.expiryDate) }}</template>
+        <template slot-scope="scope">
+          <span :style="getExpiryDateStyle(scope.row)">
+            {{ formatDate(scope.row.expiryDate) }}
+          </span>
+        </template>
       </el-table-column>
       <el-table-column label="更新时间" width="150" align="center">
         <template slot-scope="scope">{{ formatDate(scope.row.updateTime) }}</template>
@@ -117,6 +121,7 @@
 <script>
 import { fetchStockList } from '@/api/medicine/stock'
 import { fetchPharmacyList } from '@/api/medicine/pharmacy'
+import { getValidityWarningConfigList } from '@/api/medicine/validityWarningConfig'
 
 export default {
   name: 'MedicineStock',
@@ -128,6 +133,7 @@ export default {
       summaryList: [],
       pharmacyList: [],
       viewMode: 'batch',
+      colorConfigList: [],
       listQuery: {
         pageNum: 1,
         pageSize: 10,
@@ -140,8 +146,9 @@ export default {
     }
   },
   created() {
-    this.loadPharmacies()
-    this.getList()
+    Promise.all([this.loadColorConfig(), this.loadPharmacies()]).then(() => {
+      this.getList()
+    })
   },
   methods: {
     getList() {
@@ -158,6 +165,30 @@ export default {
       fetchPharmacyList({ pageSize: 100, status: 1 }).then(response => {
         this.pharmacyList = response.data.list || []
       })
+    },
+    loadColorConfig() {
+      return getValidityWarningConfigList().then(response => {
+        this.colorConfigList = response.data || []
+      })
+    },
+    getExpiryDateStyle(row) {
+      if (!row.expiryDate || !this.colorConfigList || this.colorConfigList.length === 0) {
+        return {}
+      }
+      const now = new Date()
+      const expiry = new Date(row.expiryDate)
+      const diffTime = expiry.getTime() - now.getTime()
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+      if (diffDays < 0) {
+        return { backgroundColor: '#FF0000', color: '#fff' }
+      }
+      for (const config of this.colorConfigList) {
+        if (config.enabled !== 1) continue
+        if (config.minDays <= diffDays && (config.maxDays === -1 || diffDays <= config.maxDays)) {
+          return { backgroundColor: config.color, color: '#fff' }
+        }
+      }
+      return {}
     },
     handleSearch() {
       this.listQuery.pageNum = 1

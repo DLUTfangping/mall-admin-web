@@ -53,7 +53,7 @@
     />
 
     <!-- 新增/编辑对话框 -->
-    <el-dialog :title="dialogTitle" :visible.sync="dialogFormVisible" width="1100px">
+    <el-dialog :title="dialogTitle" :visible.sync="dialogFormVisible" width="900px">
       <el-form ref="stockInForm" :model="stockInForm" :rules="rules" label-width="100px" size="small">
         <el-row :gutter="20">
           <el-col :span="8">
@@ -83,34 +83,34 @@
               <el-option class="drug-option-header">
                 <table class="drug-option-table">
                   <tr>
-                    <td class="col-code">药材编码</td>
-                    <td class="col-name">药材名称</td>
-                    <td class="col-common">通用名</td>
-                    <td class="col-type">药材类型</td>
-                    <td class="col-rx">处方药分类</td>
-                    <td class="col-cat">药品分类</td>
-                    <td class="col-dosage">剂型</td>
-                    <td class="col-spec">包装规格</td>
-                    <td class="col-essential">基本药物</td>
-                    <td class="col-skin">需要皮试</td>
-                    <td class="col-mfr">生产厂家</td>
+                    <td style="width: 40px;">药材编码</td>
+                    <td style="width: 90px;">药材名称</td>
+                    <td style="width: 65px;">通用名</td>
+                    <td style="width: 40px;">药材类型</td>
+                    <td style="width: 40px;">处方药分类</td>
+                    <td style="width: 40px;">药品分类</td>
+                    <td style="width: 40px;">剂型</td>
+                    <td style="width: 90px;">包装规格</td>
+                    <td style="width: 40px;">基本药物</td>
+                    <td style="width: 40px;">需要皮试</td>
+                    <td style="width: 100px;">生产厂家</td>
                   </tr>
                 </table>
               </el-option>
               <el-option v-for="d in drugList" :key="d.id" :label="d.drugName" :value="d.id" class="drug-option-row">
                 <table class="drug-option-table">
                   <tr>
-                    <td class="col-code">{{ d.drugCode }}</td>
-                    <td class="col-name">{{ d.drugName }}</td>
-                    <td class="col-common">{{ d.commonName || '-' }}</td>
-                    <td class="col-type">{{ getDrugTypeLabel(d.drugType) }}</td>
-                    <td class="col-rx">{{ getPrescriptionTypeLabel(d.prescriptionType) }}</td>
-                    <td class="col-cat">{{ getDrugCategoryLabel(d.drugCategory) }}</td>
-                    <td class="col-dosage">{{ getDosageFormLabel(d.dosageForm) }}</td>
-                    <td class="col-spec">{{ d.spec || '-' }}</td>
-                    <td class="col-essential">{{ d.isEssential === 1 ? '是' : '否' }}</td>
-                    <td class="col-skin">{{ d.skinTestRequired === 1 ? '是' : '否' }}</td>
-                    <td class="col-mfr">{{ d.manufacturer || '-' }}</td>
+                    <td style="width: 40px;">{{ d.drugCode }}</td>
+                    <td style="width: 90px;">{{ d.drugName }}</td>
+                    <td style="width: 65px;">{{ d.commonName || '-' }}</td>
+                    <td style="width: 40px;">{{ getDrugTypeLabel(d.drugType) }}</td>
+                    <td style="width: 40px;">{{ getPrescriptionTypeLabel(d.prescriptionType) }}</td>
+                    <td style="width: 40px;">{{ getDrugCategoryLabel(d.drugCategory) }}</td>
+                    <td style="width: 40px;">{{ getDosageFormLabel(d.dosageForm) }}</td>
+                    <td style="width: 90px;">{{ d.spec || '-' }}</td>
+                    <td style="width: 40px;">{{ d.isEssential === 1 ? '是' : '否' }}</td>
+                    <td style="width: 40px;">{{ d.skinTestRequired === 1 ? '是' : '否' }}</td>
+                    <td style="width: 100px;">{{ d.manufacturer || '-' }}</td>
                   </tr>
                 </table>
               </el-option>
@@ -252,7 +252,7 @@
     </el-dialog>
 
     <!-- 查看对话框 -->
-    <el-dialog title="入库单详情" :visible.sync="viewDialogVisible" width="1100px">
+    <el-dialog title="入库单详情" :visible.sync="viewDialogVisible" width="900px">
       <el-form label-width="100px" size="small">
         <el-row :gutter="20">
           <el-col :span="8">
@@ -775,20 +775,31 @@ export default {
 .drug-option-table {
   width: 100%;
   border-collapse: collapse;
+  border: 1px solid #ebeef5;
   font-size: 12px;
+  table-layout: fixed;
 }
 .drug-option-table td {
   padding: 4px 6px;
-  border-bottom: 1px solid #ebeef5;
+  border: 1px solid #ebeef5 !important;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  box-sizing: border-box;
 }
 .drug-option-header .drug-option-table td {
   background-color: #dcdfe6;
   color: #303133;
   font-weight: 500;
   border-bottom: 1px solid #c4c6cc;
+}
+::v-deep .drug-select-popper .el-select-dropdown__item {
+  padding: 0 !important;
+  height: auto !important;
+  line-height: normal !important;
+}
+::v-deep .drug-select-popper {
+  width: 760px !important;
 }
 .col-code { width: 80px; }
 .col-name { width: 100px; }
